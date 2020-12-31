@@ -418,3 +418,78 @@ fun BodyContent(modifier: Modifier = Modifier) {
     }
 }
 ```
+
+
+## Complex custom layout
+Custom Material Study Owl‘s staggered grid 만들기
+
+다른 방향에서 그리드를 재사용 할 수 있도록하려면 화면에 표시 할 행 수를 매개 변수로 사용할 수 있습니다. 
+해당 정보는 레이아웃이 호출 될 때 제공되어야하므로 매개 변수로 전달합니다.
+
+```kotlin
+@Composable
+fun StaggeredGrid(
+    modifier: Modifier = Modifier,
+    rows: Int = 3,
+    children: @Composable () -> Unit
+) {
+    Layout(
+        modifier = modifier,
+        children = children
+    ) { measurables, constraints ->
+        // measure and position children given constraints logic here
+    }
+}
+```
+
+### Using the custom StaggeredGrid in an example
+```kotlin
+val topics = listOf(
+    "Arts & Crafts", "Beauty", "Books", "Business", "Comics", "Culinary",
+    "Design", "Fashion", "Film", "History", "Maths", "Music", "People", "Philosophy",
+    "Religion", "Social sciences", "Technology", "TV", "Writing"
+)
+
+
+@Composable
+fun ChipContent(modifier: Modifier = Modifier) {
+    ScrollableRow(modifier = modifier) {
+        StaggeredGrid {
+            for (topic in topics) {
+                Chip(modifier = Modifier.padding(8.dp), text = topic)
+            }
+        }
+    }
+}
+
+@Composable
+fun LayoutsCodelabChipContent() {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(text = "LayoutsCodelab")
+                },
+                actions = {
+                    IconButton(onClick = { /*TODO*/ }) {
+                        Icon(Icons.Filled.Favorite)
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        ChipContent(Modifier.padding(innerPadding))
+    }
+}
+
+
+@Preview
+@Composable
+fun ChipPreview() {
+    AndroidcodelabslayoutsinjetpackcomposeTheme {
+        LayoutsCodelabChipContent()
+    }
+}
+```
+- `Row` 수에 따라 화면을 벗어날 수 있습니다.
+- ScrollableRow에 StaggeredGrid를 래핑하고 StaggeredGrid 대신 `modifier`를 전달하여 ChipContent를 스크롤 가능하게 만들 수 있습니다.
