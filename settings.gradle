@@ -1,0 +1,2 @@
+rootProject.name = "android-codelabs-layouts-in-jetpack-compose"
+include ':app'
