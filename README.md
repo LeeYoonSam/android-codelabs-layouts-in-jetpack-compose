@@ -6,6 +6,7 @@ https://developer.android.com/codelabs/jetpack-compose-layouts#0
 ---
 
 ## Modifiers
+https://developer.android.com/codelabs/jetpack-compose-layouts#2
 
 `Modifiers` 는 composable 을 꾸며주는 역할을 한다.
 
@@ -76,6 +77,7 @@ fun PhotographerCardPreview() {
 
 
 ## Slot APIs
+https://developer.android.com/codelabs/jetpack-compose-layouts#3
 
 `Compose` 는 UI를 빌드하는 데 사용할 수 있는 `고수준 Material Components composables` 을 제공합니다. 
 UI를 만들기 위한 블록이므로 화면에 표시 할 정보를 제공해야합니다.
@@ -150,6 +152,8 @@ TopAppBar(
 
 
 ## Material Components
+https://developer.android.com/codelabs/jetpack-compose-layouts#4
+
 Compose는 앱을 만드는 데 사용할 수있는 기본 제공 Material Component composables과 함께 제공됩니다.
 가장 높은 수준의 composables은 Scaffold입니다.
 
@@ -241,3 +245,176 @@ dependencies {
 ### Further work
 `Scaffold`와 `TopAppBar`는 머티리얼처럼 보이는 애플리케이션을 만드는데 사용할 수 있는 컴포저블입니다.
 `BottomNavigation` 또는 `Drawer`와 같은 다른 구성 요소에 대해서도 동일하게 수행 할 수 있습니다.
+
+
+## Create your custom layout
+https://developer.android.com/codelabs/jetpack-compose-layouts#5
+
+`Compose`는 `Column`, `Row` 또는 `Box`와 같은 기본 제공 컴포저블을 결합하여 작은 단위로 커스텀 레이아웃 컴포저블을 만들어 재사용을 촉진합니다.
+
+`View 시스템` 에서는 커스텀 레이아웃을 생성하려면 ViewGroup을 확장하고 측정 및 레이아웃 기능을 구현해야 합니다.
+`Compose` 에서는 레이아웃 컴포저블을 사용하여 함수를 작성하기만 하면 됩니다.
+
+### Using the layout modifier
+`layout modifier` 를 사용하여 요소를 측정하고 배치하는 방법을 수동으로 제어합니다.
+```kotlin
+fun Modifier.customLayoutModifier(...) = Modifier.layout { measurable, constraints ->
+  ...
+})
+```
+
+`layout modifier` 를 사용하면 두 개의 람다 매개 변수가 제공됩니다.
+- `measurable` : child 측정 및 배치
+- `constraints` : child 의 width, height의 최소값과 최대값
+
+
+`rirstBaselineToTop` modifier 생성
+```kotlin
+fun Modifier.firstBaselineToTop(
+  firstBaselineToTop: Dp
+) = Modifier.layout { measurable, constraints ->
+  ...
+}
+```
+- child 측정은 한번만 가능하다.
+
+측정을 제한하지 않고 주어진 제약조건을 사용
+```kotlin
+fun Modifier.firstBaselineToTop(
+  firstBaselineToTop: Dp
+) = Modifier.layout { measurable, constraints ->
+  val placeable = measurable.measure(constraints)
+  ...
+}
+```
+
+이제 컴포저블이 측정되었으므로 콘텐츠 배치에 사용되는 람다도 허용하는 layout (width, height) 메서드를 호출하여 크기를 계산하고 지정해야합니다.
+
+컴포저블의 width는 측정 된 컴포저 블의 `width`가되며 height는 원하는 상단에서 기준선 `height`에서 첫 번째 기준선을 뺀 컴포저 블의 높이까지입니다.
+```kotlin
+fun Modifier.firstBaselineToTop(
+  firstBaselineToTop: Dp
+) = Modifier.layout { measurable, constraints ->
+  val placeable = measurable.measure(constraints)
+
+  // Check the composable has a first baseline
+  check(placeable[FirstBaseline] != AlignmentLine.Unspecified)
+  val firstBaseline = placeable[FirstBaseline]
+
+  // Height of the composable with padding - first baseline
+  val placeableY = firstBaselineToTop.toIntPx() - firstBaseline
+  val height = placeable.height + placeableY
+  layout(placeable.width, height) {
+    ...
+  }
+}
+```
+- placeable.placeRelative (x, y)를 호출하여 화면에 컴포저블을 배치 할 수 있습니다.
+- placeRelative를 호출하지 않으면 컴포저블이 표시되지 않습니다.
+- placeRelative는 현재 layoutDirection을 기반으로 배치 가능 위치를 자동으로 조정합니다.
+
+
+텍스트의 y 위치는 맨 위 패딩에서 첫 번째 기준선의 위치를 ​​뺀 값에 해당합니다.
+```kotlin
+fun Modifier.firstBaselineToTop(
+  firstBaselineToTop: Dp
+) = Modifier.layout { measurable, constraints ->
+  ...
+  val placeableY = firstBaselineToTop.toIntPx() - firstBaseline
+  val height = placeable.height + placeableY
+  layout(placeable.width, height) {
+    // Where the composable gets placed
+    placeable.placeRelative(0, placeableY)
+  }
+}
+```
+
+예상대로 작동하는지 확인하려면 `Text`에 이 `modifier` 를 사용할 수 있습니다.
+```
+@Preview
+@Composable
+fun TextWithPaddingToBaselinePreview() {
+  LayoutsCodelabTheme {
+    Text("Hi there!", Modifier.firstBaselineToTop(32.dp))
+  }
+}
+
+@Preview
+@Composable
+fun TextWithNormalPaddingPreview() {
+  LayoutsCodelabTheme {
+    Text("Hi there!", Modifier.padding(top = 32.dp))
+  }
+}
+```
+
+### Using the Layout composable
+단일 컴포저블이 측정되고 화면에 배치되는 방식을 제어하는 ​​대신 컴포저블 그룹에 대해 동일한 필요성이있을 수 있습니다.
+
+```kotlin
+@Composable
+fun CustomLayout(
+    modifier: Modifier = Modifier,
+    // custom layout attributes 
+    children: @Composable () -> Unit
+) {
+    Layout(
+        modifier = modifier,
+        content = children
+    ) { measurables, constraints ->
+        // measure and position children given constraints logic here
+    }
+}
+```
+- `children` 에 여러가지 `Composable`이 들어오면 동일한 크기로 배치를 하는것이 가능해집니다.
+
+
+```kotlin
+@Composable
+fun MyOwnColumn(
+    modifier: Modifier = Modifier,
+    children: @Composable () -> Unit
+) {
+    Layout(
+        modifier = modifier,
+        children = children
+    ) { measurables, constraints ->
+        // Don't constrain child views further, measure them with given constraints
+        // List of measured children
+        val placeables = measurables.map { measurable ->
+            // Measure each children
+            measurable.measure(constraints)
+        }
+
+        // Track the y co-ord we have placed children up to
+        var yPosition = 0
+
+        // Set the size of the layout as big as it can
+        layout(constraints.maxWidth, constraints.maxHeight) {
+            // Place children in the parent layout
+            placeables.forEach { placeable ->
+                // Position item on the screen
+                placeable.placeRelative(x = 0, y = yPosition)
+
+                // Record the y co-ord placed up to
+                yPosition += placeable.height
+            }
+        }
+    }
+}
+```
+- 이렇게 하면 `MyOwnColumn` 으로 넘어오는 childeren 들에 같은 높이의 padding 이 지정된다.
+
+
+`MyOwnColumn` 이 제대로 표시되는지 테스트
+```kotlin
+@Composable
+fun BodyContent(modifier: Modifier = Modifier) {
+    MyOwnColumn(modifier.padding(8.dp)) {
+        Text("MyOwnColumn")
+        Text("places items")
+        Text("vertically.")
+        Text("We've done it by hand!")
+    }
+}
+```

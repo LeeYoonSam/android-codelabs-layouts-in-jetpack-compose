@@ -12,13 +12,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Providers
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -57,11 +57,49 @@ fun LayoutsCodelab() {
     }
 }
 
+/**
+ * 자식뷰들에도 같은 크기로 padding 이 적용되도록 Layout 구현
+ */
+@Composable
+fun MyOwnColumn(
+    modifier: Modifier = Modifier,
+    children: @Composable () -> Unit
+) {
+    Layout(
+        modifier = modifier,
+        content = children
+    ) { measurables, constraints ->
+        // Don't constrain child views further, measure them with given constraints
+        // List of measured children
+        val placeables = measurables.map { measurable ->
+            // Measure each children
+            measurable.measure(constraints)
+        }
+
+        // Track the y co-ord we have placed children up to
+        var yPosition = 0
+
+        // Set the size of the layout as big as it can
+        layout(constraints.maxWidth, constraints.maxHeight) {
+            // Place children in the parent layout
+            placeables.forEach { placeable ->
+                // Position item on the screen
+                placeable.placeRelative(x = 0, y = yPosition)
+
+                // Record the y co-ord placed up to
+                yPosition += placeable.height
+            }
+        }
+    }
+}
+
 @Composable
 fun BodyContent(modifier: Modifier = Modifier) {
-    Column(modifier = modifier.padding(8.dp)) {
-        Text(text = "Hi, there!")
-        Text(text = "Thanks for going through the Layouts codelab")
+    MyOwnColumn(modifier.padding(8.dp)) {
+        Text("MyOwnColumn")
+        Text("places items")
+        Text("vertically.")
+        Text("We've done it by hand!")
     }
 }
 
@@ -109,18 +147,5 @@ fun PhotographerCard(modifier: Modifier = Modifier) {
 fun PhotographerCardPreview() {
     AndroidcodelabslayoutsinjetpackcomposeTheme {
         PhotographerCard()
-    }
-}
-
-@Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    AndroidcodelabslayoutsinjetpackcomposeTheme {
-        Greeting("Android")
     }
 }
