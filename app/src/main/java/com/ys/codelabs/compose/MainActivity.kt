@@ -2,7 +2,6 @@ package com.ys.codelabs.compose
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.Text
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -12,6 +11,9 @@ import androidx.compose.foundation.layout.preferredSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Providers
 import androidx.compose.ui.Alignment
@@ -28,12 +30,46 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             AndroidcodelabslayoutsinjetpackcomposeTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(color = MaterialTheme.colors.background) {
-                    Greeting("Android")
-                }
+                LayoutsCodelab()
             }
+
         }
+    }
+}
+
+@Composable
+fun LayoutsCodelab() {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(text = "LayoutsCodelab")
+                },
+                actions = {
+                    IconButton(onClick = { /*TODO*/ }) {
+                        Icon(Icons.Filled.Favorite)
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        BodyContent(Modifier.padding(innerPadding))
+    }
+}
+
+@Composable
+fun BodyContent(modifier: Modifier = Modifier) {
+    Column(modifier = modifier.padding(8.dp)) {
+        Text(text = "Hi, there!")
+        Text(text = "Thanks for going through the Layouts codelab")
+    }
+}
+
+@Preview
+@Composable
+fun LayoutsCodelabPreview() {
+    AndroidcodelabslayoutsinjetpackcomposeTheme {
+        LayoutsCodelab()
     }
 }
 
@@ -59,9 +95,9 @@ fun PhotographerCard(modifier: Modifier = Modifier) {
                 .padding(start = 8.dp)
                 .align(Alignment.CenterVertically)
         ) {
-            androidx.compose.material.Text(text = "Albert Lee", fontWeight = FontWeight.Bold)
+            Text(text = "Albert Lee", fontWeight = FontWeight.Bold)
             Providers(AmbientContentAlpha provides ContentAlpha.medium) {
-                androidx.compose.material.Text(text = "3 minutes ago", style = MaterialTheme.typography.body2)
+                Text(text = "3 minutes ago", style = MaterialTheme.typography.body2)
             }
         }
     }
